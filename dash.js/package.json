@@ -10,7 +10,13 @@
     "coverage": "istanbul cover node_modules/mocha/bin/_mocha --require mochahook -- test/"
   },
   "devDependencies": {
+    "@babel/core": "^7.13.8",
+    "@babel/eslint-parser": "^7.13.14",
+    "@babel/preset-env": "^7.13.12",
     "babel": "^5.3.1",
+    "babel-eslint": "^10.1.0",
+    "babel-loader": "^8.2.2",
+    "babel-preset-env": "^1.7.0",
     "babelify": "^6.1.0",
     "browserify-derequire": "^0.9.4",
     "bundle-collapser": "^1.2.1",
@@ -38,12 +44,18 @@
     "jsdoc": "^3.4.0",
     "load-grunt-tasks": "^3.1.0",
     "mocha": "^2.3.4",
+    "onnxruntime-web": "^1.8.0",
     "sinon": "^1.17.2",
     "time-grunt": "^1.2.0",
     "uglify-js": "^2.4.21"
   },
   "dependencies": {
     "codem-isoboxer": "0.2.2",
+    "core-js": "^1.2.7",
+    "grunt-contrib-uglify": "^5.2.2",
+    "grunt-template-jasmine-istanbul": "^0.5.0",
+    "handlebars": "^4.7.7",
+    "onnxruntime-web": "^1.8.0",
     "round10": "^1.0.3"
   },
   "repository": {

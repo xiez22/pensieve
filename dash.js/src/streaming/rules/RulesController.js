@@ -70,13 +70,13 @@ function RulesController() {
         var ln = rulesCount;
         var rulesContext = getRulesContext(streamProcessor, current);
 
-        var callbackFunc = function (result) {
+        var callbackFunc = async function (result) {
             var value,
                 reason,
                 confidence;
 
             if (result.value !== SwitchRequest.NO_CHANGE) {
-                var newValue = overrideFunc(values[result.priority], result.value);
+                var newValue = await overrideFunc(values[result.priority], result.value);
                 if (newValue !== values[result.priority]) {
                     // change in value
                     values[result.priority] = newValue; // === result.value

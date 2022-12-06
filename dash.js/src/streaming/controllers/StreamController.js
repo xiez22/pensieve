@@ -236,7 +236,7 @@ function StreamController() {
      * Called when current playback position is changed.
      * Used to determine the time current stream is finished and we should switch to the next stream.
      */
-    function onPlaybackTimeUpdated(e) {
+    async function onPlaybackTimeUpdated(e) {
 
         if (isVideoTrackPresent()) {
             const playbackQuality = videoModel.getPlaybackQuality();

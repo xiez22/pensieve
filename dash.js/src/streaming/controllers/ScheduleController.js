@@ -29,6 +29,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+import "babelify/polyfill";
 import {PlayListTrace} from '../vo/metrics/PlayList';
 import PlaybackController from './PlaybackController';
 import AbrController from './AbrController';
@@ -185,7 +186,7 @@ function ScheduleController(config) {
         log('Schedule controller stopping for ' + type);
     }
 
-    function schedule() {
+    async function schedule() {
 
         if (isStopped || isFragmentProcessingInProgress || !bufferController || playbackController.isPaused() && !scheduleWhilePaused) return;
 

@@ -6,14 +6,14 @@ module.exports = function (grunt) {
             build: ['build/temp'],
             dist: ['dist/*']
         },
-        jshint: {
-            src: {
-                src: ['src/**/*.js', 'Gruntfile.js'],
-                options: {
-                    jshintrc: '.jshintrc'
-                }
-            }
-        },
+        // jshint: {
+        //     src: {
+        //         src: ['src/**/*.js', 'Gruntfile.js'],
+        //         options: {
+        //             jshintrc: '.jshintrc'
+        //         }
+        //     }
+        // },
 
         uglify: {
             options: {
@@ -226,12 +226,12 @@ module.exports = function (grunt) {
                 }
             }
         },
-        jscs: {
-            src: ['./src/**/*.js', 'Gruntfile.js'],
-            options: {
-                config: '.jscsrc'
-            }
-        },
+        // jscs: {
+        //     src: ['./src/**/*.js', 'Gruntfile.js'],
+        //     options: {
+        //         config: '.jscsrc'
+        //     }
+        // },
         githooks: {
             all: {
                 'pre-commit': 'lint'
@@ -241,7 +241,7 @@ module.exports = function (grunt) {
 
     require('load-grunt-tasks')(grunt);
     grunt.registerTask('default',   ['dist', 'test']);
-    grunt.registerTask('dist',      ['clean', 'jshint', 'jscs', 'browserify:mediaplayer' , 'browserify:protection', 'browserify:reporting', 'browserify:all', 'babel:es5', 'minimize', 'copy:dist']);
+    grunt.registerTask('dist',      ['clean', 'browserify:mediaplayer' , 'browserify:protection', 'browserify:reporting', 'browserify:all', 'babel:es5', 'minimize', 'copy:dist']);
     grunt.registerTask('minimize',  ['exorcise', 'uglify']);
     grunt.registerTask('test',      ['mocha_istanbul:test']);
     grunt.registerTask('watch',     ['browserify:watch']);
