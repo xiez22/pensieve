@@ -27,8 +27,8 @@
                 player.setBufferToKeep(60);
                 player.setBufferPruningInterval(60);
 
-                let initialized = player.initialize(document.querySelector("#videoPlayer"), url, true);
-                if (!initialized) {
+                player.initialize(document.querySelector("#videoPlayer"), url, true);
+                if (!play.isInitialized()) {
                     document.writeln("Your browser does not support MediaSource! Please change a browser to watch this video!");
                     return;
                 }

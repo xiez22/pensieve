@@ -141,10 +141,10 @@ function MediaPlayer() {
 
         if (!capabilities.supportsMediaSource()) {
             errHandler.capabilityError('mediasource');
-            return false;
+            return;
         }
 
-        if (mediaPlayerInitialized) return true;
+        if (mediaPlayerInitialized) return;
         mediaPlayerInitialized = true;
 
         abrController = AbrController(context).getInstance();
@@ -169,7 +169,10 @@ function MediaPlayer() {
         }
 
         log('[dash.js ' + getVersion() + '] ' + 'MediaPlayer has been initialized');
-        return true;
+    }
+
+    function isInitialized() {
+        return mediaPlayerInitialized;
     }
 
     function setAbrAlgorithm(abrAlgo) {
@@ -2047,7 +2050,8 @@ function MediaPlayer() {
         displayCaptionsOnTop: displayCaptionsOnTop,
         attachVideoContainer: attachVideoContainer,
         attachTTMLRenderingDiv: attachTTMLRenderingDiv,
-        reset: reset
+        reset: reset,
+        isInitialized: isInitialized
     };
 
     setup();
