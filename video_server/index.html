@@ -7,7 +7,7 @@
         <div>
             <video id="videoPlayer" controls="true"></video>
         </div>
-	    <script src="dash.all.debug.js" id="dashScript"></script> -->
+	    <script src="dash.all.debug.js" id="dashScript"></script>
         <script>
             (function(){
                 console.log('starting!')
@@ -28,7 +28,7 @@
                 player.setBufferPruningInterval(60);
 
                 player.initialize(document.querySelector("#videoPlayer"), url, true);
-                if (!play.isInitialized()) {
+                if (!player.isInitialized()) {
                     document.writeln("Your browser does not support MediaSource! Please change a browser to watch this video!");
                     return;
                 }
