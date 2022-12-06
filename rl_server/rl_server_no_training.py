@@ -131,7 +131,7 @@ def make_request_handler(input_dict):
                 state = np.roll(state, -1, axis=1)
 
                 next_video_chunk_sizes = []
-                for i in xrange(A_DIM):
+                for i in range(A_DIM):
                     next_video_chunk_sizes.append(get_chunk_size(i, self.input_dict['video_chunk_coount']))
 
                 # this should be S_INFO number of terms
