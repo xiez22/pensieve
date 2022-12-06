@@ -7,9 +7,10 @@
         <div>
             <video id="videoPlayer" controls="true"></video>
         </div>
-	<script src="dash.all.debug.js"></script>
+	    <script src="dash.all.debug.js" id="dashScript"></script> -->
         <script>
             (function(){
+                console.log('starting!')
                 var url = "/Manifest.mpd";
                 var player = dashjs.MediaPlayer().create()
 
@@ -26,7 +27,11 @@
                 player.setBufferToKeep(60);
                 player.setBufferPruningInterval(60);
 
-                player.initialize(document.querySelector("#videoPlayer"), url, true);
+                let initialized = player.initialize(document.querySelector("#videoPlayer"), url, true);
+                if (!initialized) {
+                    document.writeln("Your browser does not support MediaSource! Please change a browser to watch this video!");
+                    return;
+                }
 
                 if ( abr_id == 6 ) { //BOLA
                     player.enableBufferOccupancyABR(true);

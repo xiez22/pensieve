@@ -15032,10 +15032,10 @@ function MediaPlayer() {
 
         if (!capabilities.supportsMediaSource()) {
             errHandler.capabilityError('mediasource');
-            return;
+            return false;
         }
 
-        if (mediaPlayerInitialized) return;
+        if (mediaPlayerInitialized) return true;
         mediaPlayerInitialized = true;
 
         abrController = (0, _controllersAbrController2['default'])(context).getInstance();
@@ -15060,6 +15060,7 @@ function MediaPlayer() {
         }
 
         log('[dash.js ' + getVersion() + '] ' + 'MediaPlayer has been initialized');
+        return true;
     }
 
     function setAbrAlgorithm(abrAlgo) {
