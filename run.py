@@ -10,6 +10,7 @@ os.system("sudo cp video_server/dash.all.*.js /var/www/html")
 os.system("sudo cp -r video_server/video* /var/www/html")
 os.system("sudo cp video_server/Manifest.mpd /var/www/html")
 os.system("sudo cp video_server/model.onnx /var/www/html")
+os.system("sudo cp video_server/*.wasm /var/www/html")
 
 # Run simple abr server
 print('Starting ABR Server...')
