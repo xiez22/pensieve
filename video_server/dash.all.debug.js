@@ -20423,10 +20423,12 @@ var DEFAULT_VIDEO_BITRATE = 1000;
 var DEFAULT_AUDIO_BITRATE = 100;
 var QUALITY_DEFAULT = 0;
 var S_INFO = 6,
-    S_LEN = 8;
+    S_LEN = 8,
+    MPC_S_INFO = 5;
 var TOTAL_VIDEO_CHUNKS = 48;
-var HOST_IP = 'xz2000.cn';
-var PORT = 12397;
+var TOTAL_VIDEO_CHUNK = 49;
+var REBUF_PENALTY = 4.3;
+var HOST_URL = 'https://xz2000.cn:12397';
 //const dashMetrics = this.context.dashMetrics;
 //const metricsModel = this.context.metricsModel;
 
@@ -20476,7 +20478,12 @@ function AbrController() {
         pensieveSession = undefined;
 
     // Pensieve
-    var pensieveState = [];
+    var pensieveState = undefined,
+        mpcState = undefined,
+        mpcComboOptions = undefined;
+    var mpcPastBwEstimate = [];
+    var mpcPastError = [];
+    var lastRebufferTime = 0.0;
 
     function setup() {
         autoSwitchBitrate = { video: true, audio: true };
@@ -20498,8 +20505,27 @@ function AbrController() {
         dashMetrics = (0, _dashDashMetrics2['default'])(context).getInstance();
         metricsModel = (0, _modelsMetricsModel2['default'])(context).getInstance();
         pensieveState = [];
+        mpcState = [];
+        mpcComboOptions = [];
+        mpcPastBwEstimate = [];
+        mpcPastError = [];
+        lastRebufferTime = 0.0;
         for (var i = 0; i < S_INFO; i++) {
             pensieveState.push(Array(S_LEN).fill(0.0));
+        }
+        for (var i = 0; i < MPC_S_INFO; i++) {
+            mpcState.push(Array(S_LEN).fill(0.0));
+        }
+        for (var i = 0; i < 6; i++) {
+            for (var j = 0; j < 6; j++) {
+                for (var k = 0; k < 6; k++) {
+                    for (var l = 0; l < 6; l++) {
+                        for (var m = 0; m < 6; m++) {
+                            mpcComboOptions.push([i, j, k, l, m]);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -20722,6 +20748,236 @@ function AbrController() {
         }, null, this);
     }
 
+    function getBitrateFastMPC(prevQuality, buffer, bwPrediction, lastRequested, bitrateArray, nextChunkSize, delay, videoChunkRemain, curRebufferTime) {
+        console.log('[FastMPC] prevQuality:', prevQuality, ', buffer:', buffer, ', nextChunkSize:', nextChunkSize, ', delay:', delay);
+
+        if (prevQuality == null || isNaN(prevQuality)) {
+            console.error("[FastMPC] prevQuality is NaN or undefined! Changing it to 1.");
+            prevQuality = 1;
+        }
+
+        // Roll
+        for (var i = 0; i < MPC_S_INFO; i++) {
+            mpcState[i].push(mpcState[i].shift());
+        }
+
+        // Set value
+        mpcState[0][S_LEN - 1] = bitrateArray[prevQuality] / Math.max.apply(Math, _toConsumableArray(bitrateArray));
+        mpcState[1][S_LEN - 1] = buffer / 10.0;
+        mpcState[2][S_LEN - 1] = curRebufferTime / 1000.0;
+        mpcState[3][S_LEN - 1] = delay / 1000.0 / 10.0;
+        mpcState[4][S_LEN - 1] = Math.min(videoChunkRemain, TOTAL_VIDEO_CHUNKS) / TOTAL_VIDEO_CHUNKS;
+        console.log('[FastMPC] mpcState:', mpcState);
+
+        // Run
+        //================== FastMPC =========================
+        var curr_error = 0.0; //defualt assumes that this is the first request so error is 0 since we have never predicted bandwidth
+        if (mpcPastBwEstimate.length > 0) {
+            curr_error = Math.abs(mpcPastBwEstimate[mpcPastBwEstimate.length - 1] - mpcState[3][S_LEN - 1] / mpcState[3][S_LEN - 1]);
+        }
+        mpcPastError.push(curr_error);
+
+        //pick bitrate according to MPC          
+        //first get harmonic mean of last 5 bandwidths
+        var past_bandwidths = mpcState[3].slice(S_LEN - 5, S_LEN);
+
+        var bandwidth_sum = 0.0;
+        var total_cnt = 0;
+        for (var i = 0; i < past_bandwidths.length; i++) {
+            if (past_bandwidths[i] == 0.0 && bandwidth_sum == 0.0) {
+                continue;
+            }
+            total_cnt += 1;
+            bandwidth_sum += 1.0 / past_bandwidths[i];
+        }
+        var future_bandwidth = 1.0 / (bandwidth_sum / (total_cnt + 1e-5));
+
+        //future chunks length (try 4 if that many remaining)
+        var last_index = TOTAL_VIDEO_CHUNK - videoChunkRemain;
+        var future_chunk_length = 5;
+        if (TOTAL_VIDEO_CHUNK - last_index < 5) {
+            future_chunk_length = TOTAL_VIDEO_CHUNK - last_index;
+        }
+
+        //all possible combinations of 5 chunk bitrates (9^5 options)
+        //iterate over list and for each, compute reward and store max reward combination
+        var max_reward = -100000000.0;
+        var best_combo = [];
+        var start_buffer = buffer;
+        var send_data = 0;
+
+        for (var i = 0; i < mpcComboOptions.length; i++) {
+            var full_combo = mpcComboOptions[i];
+            var combo = full_combo.slice(0, future_chunk_length);
+            //calculate total rebuffer time for this combination (start with start_buffer and subtract
+            //each download time and add 2 seconds in that order)
+            var curr_rebuffer_time = 0;
+            var curr_buffer = start_buffer;
+            var bitrate_sum = 0;
+            var smoothness_diffs = 0;
+            var last_quality = prevQuality;
+            for (var position = 0; position < combo.length; position++) {
+                var chunk_quality = combo[position];
+                var index = last_index + position + 1; //e.g., if last chunk is 3, then first iter is 3+0+1=4
+                var download_time = next_chunk_size(index)[chunk_quality] / 1000000.0 / future_bandwidth; //this is MB/MB/s --> seconds
+                if (curr_buffer < download_time) {
+                    curr_rebuffer_time += download_time - curr_buffer;
+                    curr_buffer = 0;
+                } else {
+                    curr_buffer -= download_time;
+                }
+                curr_buffer += 4;
+                bitrate_sum += bitrateArray[chunk_quality];
+                smoothness_diffs += Math.abs(bitrateArray[chunk_quality] - bitrateArray[last_quality]);
+                last_quality = chunk_quality;
+            }
+
+            //compute reward for this combination (one reward per 5-chunk combo)
+            //bitrates are in Mbits/s, rebuffer in seconds, and smoothness_diffs in Mbits/s
+            var reward = bitrate_sum / 1000.0 - REBUF_PENALTY * curr_rebuffer_time - smoothness_diffs / 1000.0;
+
+            if (reward >= max_reward) {
+                if (best_combo.length != 0 && best_combo[0] < combo[0]) {
+                    best_combo = combo;
+                } else {
+                    best_combo = combo;
+                }
+                max_reward = reward;
+
+                //send data to html side (first chunk of best combo)
+                send_data = 0; //no combo had reward better than -1000000 (ERROR) so send 0
+                if (best_combo.length != 0) {
+                    //some combo was good
+                    send_data = best_combo[0];
+                }
+            }
+        }
+
+        var bitrate = send_data;
+        console.log('[FastMPC] MPC bitrate:', bitrate);
+
+        return bitrate;
+    }
+
+    function getBitrateRobustMPC(prevQuality, buffer, bwPrediction, lastRequested, bitrateArray, nextChunkSize, delay, videoChunkRemain, curRebufferTime) {
+        console.log('[RobustMPC] prevQuality:', prevQuality, ', buffer:', buffer, ', nextChunkSize:', nextChunkSize, ', delay:', delay);
+
+        if (prevQuality == null || isNaN(prevQuality)) {
+            console.error("[RobustMPC] prevQuality is NaN or undefined! Changing it to 1.");
+            prevQuality = 1;
+        }
+
+        // Roll
+        for (var i = 0; i < MPC_S_INFO; i++) {
+            mpcState[i].push(mpcState[i].shift());
+        }
+
+        // Set value
+        mpcState[0][S_LEN - 1] = bitrateArray[prevQuality] / Math.max.apply(Math, _toConsumableArray(bitrateArray));
+        mpcState[1][S_LEN - 1] = buffer / 10.0;
+        mpcState[2][S_LEN - 1] = curRebufferTime / 1000.0;
+        mpcState[3][S_LEN - 1] = delay / 1000.0 / 10.0;
+        mpcState[4][S_LEN - 1] = Math.min(videoChunkRemain, TOTAL_VIDEO_CHUNKS) / TOTAL_VIDEO_CHUNKS;
+        console.log('[RobustMPC] mpcState:', mpcState);
+
+        // Run
+        //================== RobustMPC =========================
+        var curr_error = 0.0; //defualt assumes that this is the first request so error is 0 since we have never predicted bandwidth
+        if (mpcPastBwEstimate.length > 0) {
+            curr_error = Math.abs(mpcPastBwEstimate[mpcPastBwEstimate.length - 1] - mpcState[3][S_LEN - 1] / mpcState[3][S_LEN - 1]);
+        }
+        mpcPastError.push(curr_error);
+
+        //pick bitrate according to MPC          
+        //first get harmonic mean of last 5 bandwidths
+        var past_bandwidths = mpcState[3].slice(S_LEN - 5, S_LEN);
+
+        var bandwidth_sum = 0.0;
+        var total_cnt = 0;
+        for (var i = 0; i < past_bandwidths.length; i++) {
+            if (past_bandwidths[i] == 0.0 && bandwidth_sum == 0.0) {
+                continue;
+            }
+            total_cnt += 1;
+            bandwidth_sum += 1.0 / past_bandwidths[i];
+        }
+        var harmonic_bandwidth = 1.0 / (bandwidth_sum / (total_cnt + 1e-5));
+
+        var max_error = 0.0;
+        var error_pos = -5;
+        if (mpcPastError.length < 5) {
+            error_pos = -mpcPastError.length;
+        }
+        max_error = Math.max.apply(Math, _toConsumableArray(mpcPastError.slice(mpcPastError.length + error_pos)));
+        var future_bandwidth = harmonic_bandwidth / (1.0 + max_error); // robustMPC here
+
+        //future chunks length (try 4 if that many remaining)
+        var last_index = TOTAL_VIDEO_CHUNK - videoChunkRemain;
+        var future_chunk_length = 5;
+        if (TOTAL_VIDEO_CHUNK - last_index < 5) {
+            future_chunk_length = TOTAL_VIDEO_CHUNK - last_index;
+        }
+
+        //all possible combinations of 5 chunk bitrates (9^5 options)
+        //iterate over list and for each, compute reward and store max reward combination
+        var max_reward = -100000000.0;
+        var best_combo = [];
+        var start_buffer = buffer;
+        var send_data = 0;
+
+        for (var i = 0; i < mpcComboOptions.length; i++) {
+            var full_combo = mpcComboOptions[i];
+            var combo = full_combo.slice(0, future_chunk_length);
+            //calculate total rebuffer time for this combination (start with start_buffer and subtract
+            //each download time and add 2 seconds in that order)
+            var curr_rebuffer_time = 0;
+            var curr_buffer = start_buffer;
+            var bitrate_sum = 0;
+            var smoothness_diffs = 0;
+            var last_quality = prevQuality;
+            for (var position = 0; position < combo.length; position++) {
+                var chunk_quality = combo[position];
+                var index = last_index + position + 1; //e.g., if last chunk is 3, then first iter is 3+0+1=4
+                var download_time = next_chunk_size(index)[chunk_quality] / 1000000.0 / future_bandwidth; //this is MB/MB/s --> seconds
+                if (curr_buffer < download_time) {
+                    curr_rebuffer_time += download_time - curr_buffer;
+                    curr_buffer = 0;
+                } else {
+                    curr_buffer -= download_time;
+                }
+                curr_buffer += 4;
+                bitrate_sum += bitrateArray[chunk_quality];
+                smoothness_diffs += Math.abs(bitrateArray[chunk_quality] - bitrateArray[last_quality]);
+                last_quality = chunk_quality;
+            }
+
+            //compute reward for this combination (one reward per 5-chunk combo)
+            //bitrates are in Mbits/s, rebuffer in seconds, and smoothness_diffs in Mbits/s
+            var reward = bitrate_sum / 1000.0 - REBUF_PENALTY * curr_rebuffer_time - smoothness_diffs / 1000.0;
+
+            if (reward >= max_reward) {
+                if (best_combo.length != 0 && best_combo[0] < combo[0]) {
+                    best_combo = combo;
+                } else {
+                    best_combo = combo;
+                }
+                max_reward = reward;
+
+                //send data to html side (first chunk of best combo)
+                send_data = 0; //no combo had reward better than -1000000 (ERROR) so send 0
+                if (best_combo.length != 0) {
+                    //some combo was good
+                    send_data = best_combo[0];
+                }
+            }
+        }
+
+        var bitrate = send_data;
+        console.log('[RobustMPC] MPC bitrate:', bitrate);
+
+        return bitrate;
+    }
+
     function predict_throughput(lastRequested, lastQuality, lastHTTPRequest) {
         var self = this,
             bandwidthEst = 0,
@@ -20935,7 +21191,7 @@ function AbrController() {
     }
 
     function nextChunkQuality(buffer, lastRequested, lastQuality, rebuffer) {
-        var metrics, lastHTTPRequest, bandwidthEst, xhr, data, quality, bufferLevelAdjusted;
+        var metrics, lastHTTPRequest, bandwidthEst, xhr, data, quality, bufferLevelAdjusted, curRebufferTime;
         return regeneratorRuntime.async(function nextChunkQuality$(context$2$0) {
             while (1) switch (context$2$0.prev = context$2$0.next) {
                 case 0:
@@ -20943,13 +21199,13 @@ function AbrController() {
                     lastHTTPRequest = dashMetrics.getCurrentHttpRequest(metrics);
                     bandwidthEst = predict_throughput(lastRequested, lastQuality, lastHTTPRequest);
                     context$2$0.t0 = abrAlgo;
-                    context$2$0.next = context$2$0.t0 === 2 ? 6 : context$2$0.t0 === 3 ? 12 : context$2$0.t0 === 4 ? 18 : context$2$0.t0 === 5 ? 27 : context$2$0.t0 === 6 ? 34 : context$2$0.t0 === 7 ? 40 : 51;
+                    context$2$0.next = context$2$0.t0 === 2 ? 6 : context$2$0.t0 === 3 ? 12 : context$2$0.t0 === 4 ? 18 : context$2$0.t0 === 5 ? 27 : context$2$0.t0 === 6 ? 34 : context$2$0.t0 === 7 ? 40 : context$2$0.t0 === 8 ? 51 : context$2$0.t0 === 9 ? 61 : 71;
                     break;
 
                 case 6:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", 'http://' + HOST_IP + ':' + PORT, false);
+                    xhr.open("POST", HOST_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -20966,7 +21222,7 @@ function AbrController() {
                 case 12:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", 'http://' + HOST_IP + ':' + PORT, false);
+                    xhr.open("POST", HOST_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -20984,7 +21240,7 @@ function AbrController() {
                     quality = 2;
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", 'http://' + HOST_IP + ':' + PORT, false);
+                    xhr.open("POST", HOST_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21005,7 +21261,7 @@ function AbrController() {
                 case 27:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", 'http://' + HOST_IP + ':' + PORT, false);
+                    xhr.open("POST", HOST_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21023,7 +21279,7 @@ function AbrController() {
                 case 34:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", 'http://' + HOST_IP + ':' + PORT, false);
+                    xhr.open("POST", HOST_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21040,7 +21296,7 @@ function AbrController() {
                 case 40:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", 'http://' + HOST_IP + ':' + PORT, false);
+                    xhr.open("POST", HOST_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21057,7 +21313,7 @@ function AbrController() {
 
                     console.log('[pensieve] Using local pensieve.');
                     context$2$0.next = 50;
-                    return regeneratorRuntime.awrap(getBitratePensieve(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], 48 - lastRequested));
+                    return regeneratorRuntime.awrap(getBitratePensieve(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested));
 
                 case 50:
                     return context$2$0.abrupt('return', context$2$0.sent);
@@ -21065,7 +21321,51 @@ function AbrController() {
                 case 51:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", 'http://' + HOST_IP + ':' + PORT, false);
+                    xhr.open("POST", HOST_URL, false);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            console.log("GOT RESPONSE:" + xhr.responseText + "---");
+                            if (xhr.responseText == "REFRESH") {
+                                document.location.reload(true);
+                            }
+                        }
+                    };
+                    console.log('[FastMPC] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'LocalFastMPC', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+
+                    xhr.send(JSON.stringify(data));
+                    console.log('[FastMPC] Using local FastMPC.');
+                    curRebufferTime = Math.max(rebuffer - lastRebufferTime, 0.0);
+
+                    lastRebufferTime = rebuffer;
+                    return context$2$0.abrupt('return', getBitrateFastMPC(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested, curRebufferTime));
+
+                case 61:
+                    xhr = new XMLHttpRequest();
+
+                    xhr.open("POST", HOST_URL, false);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            console.log("GOT RESPONSE:" + xhr.responseText + "---");
+                            if (xhr.responseText == "REFRESH") {
+                                document.location.reload(true);
+                            }
+                        }
+                    };
+                    console.log('[RobustMPC] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'LocalRobustMPC', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+
+                    xhr.send(JSON.stringify(data));
+                    console.log('[RobustMPC] Using local RobustMPC.');
+                    curRebufferTime = Math.max(rebuffer - lastRebufferTime, 0.0);
+
+                    lastRebufferTime = rebuffer;
+                    return context$2$0.abrupt('return', getBitrateRobustMPC(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested, curRebufferTime));
+
+                case 71:
+                    xhr = new XMLHttpRequest();
+
+                    xhr.open("POST", HOST_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21079,7 +21379,7 @@ function AbrController() {
                     xhr.send(JSON.stringify(data));
                     return context$2$0.abrupt('return', 0);
 
-                case 57:
+                case 77:
                 case 'end':
                     return context$2$0.stop();
             }
@@ -21144,7 +21444,7 @@ function AbrController() {
                                         bandwidthEst = predict_throughput(lastRequested, lastQuality, lastHTTPRequest);
                                         xhr = new XMLHttpRequest();
 
-                                        xhr.open("POST", 'http://' + HOST_IP + ':' + PORT, false);
+                                        xhr.open("POST", HOST_URL, false);
                                         xhr.onreadystatechange = function () {
                                             if (xhr.readyState == 4 && xhr.status == 200) {
                                                 console.log("GOT RESPONSE:" + xhr.responseText + "---");
