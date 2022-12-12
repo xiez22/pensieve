@@ -21199,7 +21199,7 @@ function AbrController() {
                     lastHTTPRequest = dashMetrics.getCurrentHttpRequest(metrics);
                     bandwidthEst = predict_throughput(lastRequested, lastQuality, lastHTTPRequest);
                     context$2$0.t0 = abrAlgo;
-                    context$2$0.next = context$2$0.t0 === 2 ? 6 : context$2$0.t0 === 3 ? 12 : context$2$0.t0 === 4 ? 18 : context$2$0.t0 === 5 ? 27 : context$2$0.t0 === 6 ? 34 : context$2$0.t0 === 7 ? 40 : context$2$0.t0 === 8 ? 51 : context$2$0.t0 === 9 ? 61 : 71;
+                    context$2$0.next = context$2$0.t0 === 2 ? 6 : context$2$0.t0 === 3 ? 13 : context$2$0.t0 === 4 ? 20 : context$2$0.t0 === 5 ? 28 : context$2$0.t0 === 6 ? 36 : context$2$0.t0 === 7 ? 43 : context$2$0.t0 === 8 ? 54 : context$2$0.t0 === 9 ? 64 : 74;
                     break;
 
                 case 6:
@@ -21214,12 +21214,13 @@ function AbrController() {
                             }
                         }
                     };
-                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'BB', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+                    console.log('[BB] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'LocalBB', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
 
                     xhr.send(JSON.stringify(data));
                     return context$2$0.abrupt('return', getBitrateBB(buffer));
 
-                case 12:
+                case 13:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", HOST_URL, false);
@@ -21231,12 +21232,13 @@ function AbrController() {
                             }
                         }
                     };
-                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'RB', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+                    console.log('[RB] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'LocalRB', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
 
                     xhr.send(JSON.stringify(data));
                     return context$2$0.abrupt('return', getBitrateRB(bandwidthEst));
 
-                case 18:
+                case 20:
                     quality = 2;
                     xhr = new XMLHttpRequest();
 
@@ -21244,21 +21246,19 @@ function AbrController() {
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
-                            if (xhr.responseText != "REFRESH") {
-                                quality = parseInt(xhr.responseText, 10);
-                            } else {
+                            if (xhr.responseText == "REFRESH") {
                                 document.location.reload(true);
                             }
                         }
                     };
-                    bufferLevelAdjusted = buffer - 0.15 - 0.4 - 4;
-                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+                    console.log('[BOLA] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'LocalBOLA', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
 
                     xhr.send(JSON.stringify(data));
-                    console.log("QUALITY RETURNED IS: " + quality);
+                    // console.log("QUALITY RETURNED IS: " + quality);
                     return context$2$0.abrupt('return', quality);
 
-                case 27:
+                case 28:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", HOST_URL, false);
@@ -21270,13 +21270,14 @@ function AbrController() {
                             }
                         }
                     };
-                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'Festive', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+                    console.log('[FESTIVE] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'LocalFESTIVE', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
 
                     xhr.send(JSON.stringify(data));
                     bufferLevelAdjusted = buffer - 0.15 - 0.4 - 4;
                     return context$2$0.abrupt('return', getBitrateFestive(lastQuality, bufferLevelAdjusted, bandwidthEst, lastRequested, bitrateArray));
 
-                case 34:
+                case 36:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", HOST_URL, false);
@@ -21288,12 +21289,13 @@ function AbrController() {
                             }
                         }
                     };
-                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'Bola', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+                    console.log('[Remote] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'Remote', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
 
                     xhr.send(JSON.stringify(data));
                     return context$2$0.abrupt('return', -1);
 
-                case 40:
+                case 43:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", HOST_URL, false);
@@ -21312,13 +21314,13 @@ function AbrController() {
                     bufferLevelAdjusted = buffer - 0.15 - 0.4 - 4;
 
                     console.log('[pensieve] Using local pensieve.');
-                    context$2$0.next = 50;
+                    context$2$0.next = 53;
                     return regeneratorRuntime.awrap(getBitratePensieve(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested));
 
-                case 50:
+                case 53:
                     return context$2$0.abrupt('return', context$2$0.sent);
 
-                case 51:
+                case 54:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", HOST_URL, false);
@@ -21340,7 +21342,7 @@ function AbrController() {
                     lastRebufferTime = rebuffer;
                     return context$2$0.abrupt('return', getBitrateFastMPC(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested, curRebufferTime));
 
-                case 61:
+                case 64:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", HOST_URL, false);
@@ -21362,7 +21364,7 @@ function AbrController() {
                     lastRebufferTime = rebuffer;
                     return context$2$0.abrupt('return', getBitrateRobustMPC(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested, curRebufferTime));
 
-                case 71:
+                case 74:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", HOST_URL, false);
@@ -21379,7 +21381,7 @@ function AbrController() {
                     xhr.send(JSON.stringify(data));
                     return context$2$0.abrupt('return', 0);
 
-                case 77:
+                case 80:
                 case 'end':
                     return context$2$0.stop();
             }
