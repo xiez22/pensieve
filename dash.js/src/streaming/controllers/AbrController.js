@@ -63,7 +63,7 @@ function AbrController() {
     let context = this.context;
     let eventBus = EventBus(context).getInstance();
     let abrAlgo = -1;
-    let bitrateArray = [200,300,480,750,1200,1850,2850,4300,5300];
+    let bitrateArray = [300,750,1200,1850,2850,4300];
     let reservoir = 5;
     let cushion = 10;
     let p_rb = 1;
@@ -240,7 +240,7 @@ function AbrController() {
         lastIndex = lastRequested;
         // 2. compute b_target
         tmpBitrate = p*bwPrediction;
-        for (var i = 9; i>=0; i--) { // todo: use bitrateArray.length
+        for (var i = bitrateArray.length; i>=0; i--) { // todo: use bitrateArray.length
             if (bitrateArray[i] <= tmpBitrate) {
                 b_target = i;
                 break;
@@ -639,7 +639,7 @@ function AbrController() {
         }
         
         // findout matching quality level
-        for (var i = 9; i>=0; i--) {
+        for (var i = bitrateArray.length; i>=0; i--) {
             if (tmpBitrate >= bitrateArray[i]) {
                 tmpQuality = i;
                 break;
@@ -659,7 +659,7 @@ function AbrController() {
         tmpBitrate = bandwidth*p_rb;
         
         // findout matching quality level
-        for (var i = 9; i>=0; i--) {
+        for (var i = bitrateArray.length; i>=0; i--) {
             if (tmpBitrate >= bitrateArray[i]) {
                 tmpQuality = i;
                 break;
