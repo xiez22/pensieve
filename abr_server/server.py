@@ -184,7 +184,7 @@ def main():
     print(f'ABR: {abr} Port: {abr_port_dict[abr]} Trace: {trace_file}')
     # port=sys.argv[3]
     print(sys.argv)
-    if abr not in ['bb','rb','mpc','festive','fastmpc','pensieve']: 
+    if abr not in ['bb','rb','mpc','festive','fastmpc','pensieve', 'simple']: 
         raise NotImplementedError(f"Unrecognized ABR algo: {abr}.")
     if os.path.exists(LOG_FILE + 'server')==0: os.mkdir(LOG_FILE + 'server')
     if os.path.exists(LOG_FILE + 'server/'+abr)==0: os.mkdir(LOG_FILE + 'server/'+abr)
