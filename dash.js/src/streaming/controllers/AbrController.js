@@ -834,6 +834,7 @@ function AbrController() {
                 xhr.send(JSON.stringify(data));
                 return getBitrateRB(bandwidthEst);
             case 4:
+                var quality = 2;
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", REMOTE_PENSIEVE_URL, false);
                 xhr.onreadystatechange = function() {
@@ -868,6 +869,7 @@ function AbrController() {
                 var bufferLevelAdjusted = buffer-0.15-0.4-4;
                 return getBitrateFestive(lastQuality, bufferLevelAdjusted, bandwidthEst, lastRequested, bitrateArray);
             case 6:
+                var quality = 2;
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", REMOTE_PENSIEVE_URL, false);
                 xhr.onreadystatechange = function() {
@@ -939,6 +941,7 @@ function AbrController() {
                 lastRebufferTime = rebuffer;
                 return getBitrateRobustMPC(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested, curRebufferTime);
             case 10:
+                var quality = 2;
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", REMOTE_BB_URL, false);
                 xhr.onreadystatechange = function() {
@@ -957,6 +960,7 @@ function AbrController() {
                 console.log("[RemoteBB] Returned Quality is:" + quality)
                 return quality;
             case 11:
+                var quality = 2;
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", REMOTE_RB_URL, false);
                 xhr.onreadystatechange = function() {
@@ -975,6 +979,7 @@ function AbrController() {
                 console.log("[RemoteRB] Returned Quality is:" + quality)
                 return quality;
             case 12:
+                var quality = 2;
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", REMOTE_FESTIVE_URL, false);
                 xhr.onreadystatechange = function() {
@@ -993,6 +998,7 @@ function AbrController() {
                 console.log("[RemoteFESTIVE] Returned Quality is:" + quality)
                 return quality;
             case 13:
+                var quality = 2;
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", REMOTE_ROBUSTMPC_URL, false);
                 xhr.onreadystatechange = function() {
@@ -1011,6 +1017,7 @@ function AbrController() {
                 console.log("[RemoteRobustMPC] Returned Quality is:" + quality)
                 return quality;
             case 14:
+                var quality = 2;
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", REMOTE_FASTMPC_URL, false);
                 xhr.onreadystatechange = function() {

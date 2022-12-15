@@ -21202,7 +21202,7 @@ function AbrController() {
     }
 
     function nextChunkQuality(buffer, lastRequested, lastQuality, rebuffer) {
-        var metrics, lastHTTPRequest, bandwidthEst, xhr, data, bufferLevelAdjusted, curRebufferTime;
+        var metrics, lastHTTPRequest, bandwidthEst, xhr, data, quality, bufferLevelAdjusted, curRebufferTime;
         return regeneratorRuntime.async(function nextChunkQuality$(context$2$0) {
             while (1) switch (context$2$0.prev = context$2$0.next) {
                 case 0:
@@ -21210,7 +21210,7 @@ function AbrController() {
                     lastHTTPRequest = dashMetrics.getCurrentHttpRequest(metrics);
                     bandwidthEst = predict_throughput(lastRequested, lastQuality, lastHTTPRequest);
                     context$2$0.t0 = abrAlgo;
-                    context$2$0.next = context$2$0.t0 === 2 ? 6 : context$2$0.t0 === 3 ? 13 : context$2$0.t0 === 4 ? 20 : context$2$0.t0 === 5 ? 28 : context$2$0.t0 === 6 ? 36 : context$2$0.t0 === 7 ? 44 : context$2$0.t0 === 8 ? 55 : context$2$0.t0 === 9 ? 65 : context$2$0.t0 === 10 ? 75 : context$2$0.t0 === 11 ? 83 : context$2$0.t0 === 12 ? 91 : context$2$0.t0 === 13 ? 99 : context$2$0.t0 === 14 ? 107 : 115;
+                    context$2$0.next = context$2$0.t0 === 2 ? 6 : context$2$0.t0 === 3 ? 13 : context$2$0.t0 === 4 ? 20 : context$2$0.t0 === 5 ? 29 : context$2$0.t0 === 6 ? 37 : context$2$0.t0 === 7 ? 46 : context$2$0.t0 === 8 ? 57 : context$2$0.t0 === 9 ? 67 : context$2$0.t0 === 10 ? 77 : context$2$0.t0 === 11 ? 86 : context$2$0.t0 === 12 ? 95 : context$2$0.t0 === 13 ? 104 : context$2$0.t0 === 14 ? 113 : 122;
                     break;
 
                 case 6:
@@ -21250,6 +21250,7 @@ function AbrController() {
                     return context$2$0.abrupt('return', getBitrateRB(bandwidthEst));
 
                 case 20:
+                    quality = 2;
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_PENSIEVE_URL, false);
@@ -21270,7 +21271,7 @@ function AbrController() {
                     console.log("[RemotePensieve] Returned Quality is:" + quality);
                     return context$2$0.abrupt('return', quality);
 
-                case 28:
+                case 29:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_SIMPLE_URL, false);
@@ -21289,7 +21290,8 @@ function AbrController() {
                     bufferLevelAdjusted = buffer - 0.15 - 0.4 - 4;
                     return context$2$0.abrupt('return', getBitrateFestive(lastQuality, bufferLevelAdjusted, bandwidthEst, lastRequested, bitrateArray));
 
-                case 36:
+                case 37:
+                    quality = 2;
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_PENSIEVE_URL, false);
@@ -21310,7 +21312,7 @@ function AbrController() {
                     console.log("[RemotePensieve] Returned Quality is:" + quality);
                     return context$2$0.abrupt('return', quality);
 
-                case 44:
+                case 46:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_SIMPLE_URL, false);
@@ -21329,13 +21331,13 @@ function AbrController() {
                     bufferLevelAdjusted = buffer - 0.15 - 0.4 - 4;
 
                     console.log('[pensieve] Using local pensieve.');
-                    context$2$0.next = 54;
+                    context$2$0.next = 56;
                     return regeneratorRuntime.awrap(getBitratePensieve(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested));
 
-                case 54:
+                case 56:
                     return context$2$0.abrupt('return', context$2$0.sent);
 
-                case 55:
+                case 57:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_SIMPLE_URL, false);
@@ -21357,7 +21359,7 @@ function AbrController() {
                     lastRebufferTime = rebuffer;
                     return context$2$0.abrupt('return', getBitrateFastMPC(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested, curRebufferTime));
 
-                case 65:
+                case 67:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_SIMPLE_URL, false);
@@ -21379,7 +21381,8 @@ function AbrController() {
                     lastRebufferTime = rebuffer;
                     return context$2$0.abrupt('return', getBitrateRobustMPC(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested, curRebufferTime));
 
-                case 75:
+                case 77:
+                    quality = 2;
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_BB_URL, false);
@@ -21400,7 +21403,8 @@ function AbrController() {
                     console.log("[RemoteBB] Returned Quality is:" + quality);
                     return context$2$0.abrupt('return', quality);
 
-                case 83:
+                case 86:
+                    quality = 2;
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_RB_URL, false);
@@ -21421,7 +21425,8 @@ function AbrController() {
                     console.log("[RemoteRB] Returned Quality is:" + quality);
                     return context$2$0.abrupt('return', quality);
 
-                case 91:
+                case 95:
+                    quality = 2;
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_FESTIVE_URL, false);
@@ -21442,7 +21447,8 @@ function AbrController() {
                     console.log("[RemoteFESTIVE] Returned Quality is:" + quality);
                     return context$2$0.abrupt('return', quality);
 
-                case 99:
+                case 104:
+                    quality = 2;
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_ROBUSTMPC_URL, false);
@@ -21463,7 +21469,8 @@ function AbrController() {
                     console.log("[RemoteRobustMPC] Returned Quality is:" + quality);
                     return context$2$0.abrupt('return', quality);
 
-                case 107:
+                case 113:
+                    quality = 2;
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_FASTMPC_URL, false);
@@ -21484,7 +21491,7 @@ function AbrController() {
                     console.log("[RemoteFastMPC] Returned Quality is:" + quality);
                     return context$2$0.abrupt('return', quality);
 
-                case 115:
+                case 122:
                     xhr = new XMLHttpRequest();
 
                     xhr.open("POST", REMOTE_SIMPLE_URL, false);
@@ -21501,7 +21508,7 @@ function AbrController() {
                     xhr.send(JSON.stringify(data));
                     return context$2$0.abrupt('return', 0);
 
-                case 121:
+                case 128:
                 case 'end':
                     return context$2$0.stop();
             }
