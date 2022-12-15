@@ -20655,7 +20655,7 @@ function AbrController() {
         } else {
             bitrate = b_cur;
         }
-        console.log("[FESTIVE] bitrate:", tmpQuality);
+        console.log("[FESTIVE] bitrate:", bitrate);
         // 5. return
         return bitrate;
     }
