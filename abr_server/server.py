@@ -19,6 +19,7 @@ import itertools
 
 # Define port map: [abr: port]
 abr_port_dict = {
+    'pensieve': 12300,
     'bb': 12301,
     'rb': 12302,
     'festive': 12303,
