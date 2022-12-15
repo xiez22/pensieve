@@ -12,7 +12,7 @@ from constant import *
 
 # Override some params
 S_INFO = 6
-ACTOR_MODEL = './results/pensieve/model/actor.pt'
+ACTOR_MODEL = './trained_model/actor.pt'
 
 
 class Pensieve:
