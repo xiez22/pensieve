@@ -20766,7 +20766,7 @@ function AbrController() {
         mpcState[0][S_LEN - 1] = bitrateArray[prevQuality] / Math.max.apply(Math, _toConsumableArray(bitrateArray));
         mpcState[1][S_LEN - 1] = buffer / 10.0;
         mpcState[2][S_LEN - 1] = curRebufferTime / 1000.0;
-        mpcState[3][S_LEN - 1] = nextChunkSize(lastRequested)[prevQuality] / delay / 1000.0;
+        mpcState[3][S_LEN - 1] = next_chunk_size(lastRequested)[prevQuality] / delay / 1000.0;
         mpcState[4][S_LEN - 1] = Math.min(videoChunkRemain, TOTAL_VIDEO_CHUNKS) / TOTAL_VIDEO_CHUNKS;
         console.log('[FastMPC] mpcState:', mpcState);
 
@@ -20878,7 +20878,7 @@ function AbrController() {
         mpcState[0][S_LEN - 1] = bitrateArray[prevQuality] / Math.max.apply(Math, _toConsumableArray(bitrateArray));
         mpcState[1][S_LEN - 1] = buffer / 10.0;
         mpcState[2][S_LEN - 1] = curRebufferTime / 1000.0;
-        mpcState[3][S_LEN - 1] = nextChunkSize(lastRequested)[prevQuality] / delay / 1000.0;
+        mpcState[3][S_LEN - 1] = next_chunk_size(lastRequested)[prevQuality] / delay / 1000.0;
         mpcState[4][S_LEN - 1] = Math.min(videoChunkRemain, TOTAL_VIDEO_CHUNKS) / TOTAL_VIDEO_CHUNKS;
         console.log('[RobustMPC] mpcState:', mpcState);
 
