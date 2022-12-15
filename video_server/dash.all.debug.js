@@ -20428,7 +20428,13 @@ var S_INFO = 6,
 var TOTAL_VIDEO_CHUNKS = 48;
 var TOTAL_VIDEO_CHUNK = 49;
 var REBUF_PENALTY = 4.3;
-var HOST_URL = 'https://xz2000.cn:12397';
+var REMOTE_PENSIEVE_URL = 'https://xz2000.cn:12390';
+var REMOTE_BB_URL = 'https://xz2000.cn:12391';
+var REMOTE_RB_URL = 'https://xz2000.cn:12392';
+var REMOTE_FESTIVE_URL = 'https://xz2000.cn:12393';
+var REMOTE_ROBUSTMPC_URL = 'https://xz2000.cn:12394';
+var REMOTE_FASTMPC_URL = 'https://xz2000.cn:12395';
+var REMOTE_SIMPLE_URL = 'https://xz2000.cn:12396';
 //const dashMetrics = this.context.dashMetrics;
 //const metricsModel = this.context.metricsModel;
 
@@ -21196,7 +21202,7 @@ function AbrController() {
     }
 
     function nextChunkQuality(buffer, lastRequested, lastQuality, rebuffer) {
-        var metrics, lastHTTPRequest, bandwidthEst, xhr, data, quality, bufferLevelAdjusted, curRebufferTime;
+        var metrics, lastHTTPRequest, bandwidthEst, xhr, data, bufferLevelAdjusted, curRebufferTime;
         return regeneratorRuntime.async(function nextChunkQuality$(context$2$0) {
             while (1) switch (context$2$0.prev = context$2$0.next) {
                 case 0:
@@ -21204,13 +21210,13 @@ function AbrController() {
                     lastHTTPRequest = dashMetrics.getCurrentHttpRequest(metrics);
                     bandwidthEst = predict_throughput(lastRequested, lastQuality, lastHTTPRequest);
                     context$2$0.t0 = abrAlgo;
-                    context$2$0.next = context$2$0.t0 === 2 ? 6 : context$2$0.t0 === 3 ? 13 : context$2$0.t0 === 4 ? 20 : context$2$0.t0 === 5 ? 28 : context$2$0.t0 === 6 ? 36 : context$2$0.t0 === 7 ? 43 : context$2$0.t0 === 8 ? 54 : context$2$0.t0 === 9 ? 64 : 74;
+                    context$2$0.next = context$2$0.t0 === 2 ? 6 : context$2$0.t0 === 3 ? 13 : context$2$0.t0 === 4 ? 20 : context$2$0.t0 === 5 ? 28 : context$2$0.t0 === 6 ? 36 : context$2$0.t0 === 7 ? 44 : context$2$0.t0 === 8 ? 55 : context$2$0.t0 === 9 ? 65 : context$2$0.t0 === 10 ? 75 : context$2$0.t0 === 11 ? 83 : context$2$0.t0 === 12 ? 91 : context$2$0.t0 === 13 ? 99 : context$2$0.t0 === 14 ? 107 : 115;
                     break;
 
                 case 6:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", HOST_URL, false);
+                    xhr.open("POST", REMOTE_SIMPLE_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21228,7 +21234,7 @@ function AbrController() {
                 case 13:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", HOST_URL, false);
+                    xhr.open("POST", REMOTE_SIMPLE_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21244,29 +21250,30 @@ function AbrController() {
                     return context$2$0.abrupt('return', getBitrateRB(bandwidthEst));
 
                 case 20:
-                    quality = 2;
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", HOST_URL, false);
+                    xhr.open("POST", REMOTE_PENSIEVE_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
-                            if (xhr.responseText == "REFRESH") {
+                            if (xhr.responseText != "REFRESH") {
+                                quality = parseInt(xhr.responseText, 10);
+                            } else {
                                 document.location.reload(true);
                             }
                         }
                     };
-                    console.log('[BOLA] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
-                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'LocalBOLA', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+                    console.log('[RemotePensieve] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'RemotePensieve', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
 
                     xhr.send(JSON.stringify(data));
-                    // console.log("QUALITY RETURNED IS: " + quality);
+                    console.log("[RemotePensieve] Returned Quality is:" + quality);
                     return context$2$0.abrupt('return', quality);
 
                 case 28:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", HOST_URL, false);
+                    xhr.open("POST", REMOTE_SIMPLE_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21285,25 +21292,28 @@ function AbrController() {
                 case 36:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", HOST_URL, false);
+                    xhr.open("POST", REMOTE_PENSIEVE_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
-                            if (xhr.responseText == "REFRESH") {
+                            if (xhr.responseText != "REFRESH") {
+                                quality = parseInt(xhr.responseText, 10);
+                            } else {
                                 document.location.reload(true);
                             }
                         }
                     };
-                    console.log('[Remote] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
-                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'Remote', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+                    console.log('[RemotePensieve] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'RemotePensieve', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
 
                     xhr.send(JSON.stringify(data));
-                    return context$2$0.abrupt('return', -1);
+                    console.log("[RemotePensieve] Returned Quality is:" + quality);
+                    return context$2$0.abrupt('return', quality);
 
-                case 43:
+                case 44:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", HOST_URL, false);
+                    xhr.open("POST", REMOTE_SIMPLE_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21319,16 +21329,16 @@ function AbrController() {
                     bufferLevelAdjusted = buffer - 0.15 - 0.4 - 4;
 
                     console.log('[pensieve] Using local pensieve.');
-                    context$2$0.next = 53;
+                    context$2$0.next = 54;
                     return regeneratorRuntime.awrap(getBitratePensieve(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested));
 
-                case 53:
+                case 54:
                     return context$2$0.abrupt('return', context$2$0.sent);
 
-                case 54:
+                case 55:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", HOST_URL, false);
+                    xhr.open("POST", REMOTE_SIMPLE_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21347,10 +21357,10 @@ function AbrController() {
                     lastRebufferTime = rebuffer;
                     return context$2$0.abrupt('return', getBitrateFastMPC(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested, curRebufferTime));
 
-                case 64:
+                case 65:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", HOST_URL, false);
+                    xhr.open("POST", REMOTE_SIMPLE_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21369,10 +21379,115 @@ function AbrController() {
                     lastRebufferTime = rebuffer;
                     return context$2$0.abrupt('return', getBitrateRobustMPC(lastQuality, buffer, bandwidthEst, lastRequested, bitrateArray, data['nextChunkSize'], data['lastChunkFinishTime'] - data['lastChunkStartTime'], TOTAL_VIDEO_CHUNKS - lastRequested, curRebufferTime));
 
-                case 74:
+                case 75:
                     xhr = new XMLHttpRequest();
 
-                    xhr.open("POST", HOST_URL, false);
+                    xhr.open("POST", REMOTE_BB_URL, false);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            console.log("GOT RESPONSE:" + xhr.responseText + "---");
+                            if (xhr.responseText != "REFRESH") {
+                                quality = parseInt(xhr.responseText, 10);
+                            } else {
+                                document.location.reload(true);
+                            }
+                        }
+                    };
+                    console.log('[RemoteBB] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'RemoteBB', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+
+                    xhr.send(JSON.stringify(data));
+                    console.log("[RemoteBB] Returned Quality is:" + quality);
+                    return context$2$0.abrupt('return', quality);
+
+                case 83:
+                    xhr = new XMLHttpRequest();
+
+                    xhr.open("POST", REMOTE_RB_URL, false);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            console.log("GOT RESPONSE:" + xhr.responseText + "---");
+                            if (xhr.responseText != "REFRESH") {
+                                quality = parseInt(xhr.responseText, 10);
+                            } else {
+                                document.location.reload(true);
+                            }
+                        }
+                    };
+                    console.log('[RemoteRB] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'RemoteRB', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+
+                    xhr.send(JSON.stringify(data));
+                    console.log("[RemoteRB] Returned Quality is:" + quality);
+                    return context$2$0.abrupt('return', quality);
+
+                case 91:
+                    xhr = new XMLHttpRequest();
+
+                    xhr.open("POST", REMOTE_FESTIVE_URL, false);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            console.log("GOT RESPONSE:" + xhr.responseText + "---");
+                            if (xhr.responseText != "REFRESH") {
+                                quality = parseInt(xhr.responseText, 10);
+                            } else {
+                                document.location.reload(true);
+                            }
+                        }
+                    };
+                    console.log('[RemoteFESTIVE] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'RemoteFESTIVE', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+
+                    xhr.send(JSON.stringify(data));
+                    console.log("[RemoteFESTIVE] Returned Quality is:" + quality);
+                    return context$2$0.abrupt('return', quality);
+
+                case 99:
+                    xhr = new XMLHttpRequest();
+
+                    xhr.open("POST", REMOTE_ROBUSTMPC_URL, false);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            console.log("GOT RESPONSE:" + xhr.responseText + "---");
+                            if (xhr.responseText != "REFRESH") {
+                                quality = parseInt(xhr.responseText, 10);
+                            } else {
+                                document.location.reload(true);
+                            }
+                        }
+                    };
+                    console.log('[RemoteRobustMPC] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'RemoteRobustMPC', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+
+                    xhr.send(JSON.stringify(data));
+                    console.log("[RemoteRobustMPC] Returned Quality is:" + quality);
+                    return context$2$0.abrupt('return', quality);
+
+                case 107:
+                    xhr = new XMLHttpRequest();
+
+                    xhr.open("POST", REMOTE_FASTMPC_URL, false);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            console.log("GOT RESPONSE:" + xhr.responseText + "---");
+                            if (xhr.responseText != "REFRESH") {
+                                quality = parseInt(xhr.responseText, 10);
+                            } else {
+                                document.location.reload(true);
+                            }
+                        }
+                    };
+                    console.log('[RemoteFastMPC] next_chunk_size', next_chunk_size(lastRequested + 1, lastQuality));
+                    data = { 'nextChunkSize': next_chunk_size(lastRequested + 1, lastQuality), 'Type': 'RemoteFastMPC', 'lastquality': lastQuality, 'buffer': buffer, 'bufferAdjusted': bufferLevelAdjusted, 'bandwidthEst': bandwidthEst, 'lastRequest': lastRequested, 'RebufferTime': rebuffer, 'lastChunkFinishTime': lastHTTPRequest._tfinish.getTime(), 'lastChunkStartTime': lastHTTPRequest.tresponse.getTime(), 'lastChunkSize': last_chunk_size(lastHTTPRequest) };
+
+                    xhr.send(JSON.stringify(data));
+                    console.log("[RemoteFastMPC] Returned Quality is:" + quality);
+                    return context$2$0.abrupt('return', quality);
+
+                case 115:
+                    xhr = new XMLHttpRequest();
+
+                    xhr.open("POST", REMOTE_SIMPLE_URL, false);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4 && xhr.status == 200) {
                             console.log("GOT RESPONSE:" + xhr.responseText + "---");
@@ -21386,7 +21501,7 @@ function AbrController() {
                     xhr.send(JSON.stringify(data));
                     return context$2$0.abrupt('return', 0);
 
-                case 80:
+                case 121:
                 case 'end':
                     return context$2$0.stop();
             }
@@ -21451,7 +21566,7 @@ function AbrController() {
                                         bandwidthEst = predict_throughput(lastRequested, lastQuality, lastHTTPRequest);
                                         xhr = new XMLHttpRequest();
 
-                                        xhr.open("POST", HOST_URL, false);
+                                        xhr.open("POST", REMOTE_SIMPLE_URL, false);
                                         xhr.onreadystatechange = function () {
                                             if (xhr.readyState == 4 && xhr.status == 200) {
                                                 console.log("GOT RESPONSE:" + xhr.responseText + "---");

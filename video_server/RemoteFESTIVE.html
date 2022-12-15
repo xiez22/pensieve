@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Dash.js Rocks haha</title>
+    </head>
+    <body>
+        <div>
+            <video id="videoPlayer" controls="true"></video>
+        </div>
+	    <script src="dash.all.debug.js" id="dashScript"></script>
+        <script>
+            (function(){
+                console.log('starting!')
+                var url = "/Manifest.mpd";
+                var player = dashjs.MediaPlayer().create()
+
+                var abr_algorithms = {0: 'Default', 1: 'Fixed Rate (0)', 2: 'Local BB', 3: 'Local RB', 4: 'Remote Pensieve', 5: 'Local Festive', 6: 'Local Bola', 7: 'Local Pensieve', 8: 'Local FastMPC', 9: 'Local RobustMPC', 10: 'Remote BB', 11: 'Remote RB', 12: 'Remote FESTIVE', 13: 'Remote RobustMPC', 14: 'Remote FastMPC'};
+                var abr_id = 12;
+
+                if ( abr_id > 1 && abr_id != 6 ) {
+                    player.enablerlABR(true);
+                }
+
+                // uncomment this block if you want to change the buffer size that dash tries to maintain
+                player.setBufferTimeAtTopQuality(60);
+                player.setStableBufferTime(60);
+                player.setBufferToKeep(60);
+                player.setBufferPruningInterval(60);
+
+                player.extend("RequestModifier", function () {
+                    return {
+                        modifyRequestHeader: function (xhr) {
+                            // Add custom header. Requires to set up Access-Control-Allow-Headers in your
+                            // response header in the server side. Reference: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/setRequestHeader
+                            // xhr.setRequestHeader('DASH-CUSTOM-HEADER', 'MyValue');
+                            return xhr;
+                        },
+                        modifyRequestURL: function (url) {
+                            // Modify url adding a custom query string parameter
+                            return url + `?customQuery=${Date.now()}`;
+                        }
+                    };
+                });
+
+                player.initialize(document.querySelector("#videoPlayer"), url, true);
+                if (!player.isInitialized()) {
+                    document.writeln("Your browser does not support MediaSource! Please change a browser to watch this video!");
+                    return;
+                }
+
+                if ( abr_id == 6 ) { //BOLA
+                    player.enableBufferOccupancyABR(true);
+                }
+                player.setAbrAlgorithm(abr_id);
+
+                if ( abr_id in abr_algorithms ) {
+                    document.title = abr_algorithms[abr_id];
+                } else {
+                    document.title = "Unknown ABR Algorithm";
+                }
+            })();
+        </script>
+    </body>
+</html>

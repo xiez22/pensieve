@@ -12,6 +12,7 @@ os.system("sudo cp video_server/Manifest.mpd /var/www/html")
 os.system("sudo cp video_server/model.onnx /var/www/html")
 os.system("sudo cp video_server/*.wasm /var/www/html")
 
-# Run simple abr server
-print('Starting ABR Server...')
-os.system("python3 -m rl_server.simple_server")
+print('Setup finished! Goto abr_server/ and run python3 server.py [abr] [trace_name] to start abr server!')
+# # Run simple abr server
+# print('Starting ABR Server...')
+# os.system("python3 -m rl_server.simple_server")

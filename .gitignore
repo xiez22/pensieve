@@ -1,1 +1,3 @@
 rl_server/results
+*.DS_Store
+*__pycache__

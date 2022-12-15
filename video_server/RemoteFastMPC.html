@@ -14,8 +14,8 @@
                 var url = "/Manifest.mpd";
                 var player = dashjs.MediaPlayer().create()
 
-                var abr_algorithms = {0: 'Default', 1: 'Fixed Rate (0)', 2: 'Local BB', 3: 'Local RB', 4: 'Remote', 5: 'Local Festive', 6: 'Local Bola', 7: 'Local Pensieve', 8: 'Local FastMPC', 9: 'Local RobustMPC'};
-                var abr_id = 4;
+                var abr_algorithms = {0: 'Default', 1: 'Fixed Rate (0)', 2: 'Local BB', 3: 'Local RB', 4: 'Remote Pensieve', 5: 'Local Festive', 6: 'Local Bola', 7: 'Local Pensieve', 8: 'Local FastMPC', 9: 'Local RobustMPC', 10: 'Remote BB', 11: 'Remote RB', 12: 'Remote FESTIVE', 13: 'Remote RobustMPC', 14: 'Remote FastMPC'};
+                var abr_id = 14;
 
                 if ( abr_id > 1 && abr_id != 6 ) {
                     player.enablerlABR(true);
