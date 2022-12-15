@@ -20655,6 +20655,7 @@ function AbrController() {
         } else {
             bitrate = b_cur;
         }
+        console.log("[FESTIVE] bitrate:", tmpQuality);
         // 5. return
         return bitrate;
     }
@@ -21038,9 +21039,9 @@ function AbrController() {
         if (bLevel <= reservoir) {
             tmpBitrate = bitrateArray[0];
         } else if (bLevel > reservoir + cushion) {
-            tmpBitrate = bitrateArray[8];
+            tmpBitrate = bitrateArray[bitrateArray.length - 1];
         } else {
-            tmpBitrate = bitrateArray[0] + (bitrateArray[8] - bitrateArray[0]) * (bLevel - reservoir) / cushion;
+            tmpBitrate = bitrateArray[0] + (bitrateArray[bitrateArray.length - 1] - bitrateArray[0]) * (bLevel - reservoir) / cushion;
         }
 
         // findout matching quality level
@@ -21051,6 +21052,7 @@ function AbrController() {
             }
             tmpQuality = i;
         }
+        console.log("[BB] bitrate:", tmpQuality);
         //return 9;
         return tmpQuality;
         // return 0;
@@ -21071,6 +21073,7 @@ function AbrController() {
             }
             tmpQuality = i;
         }
+        console.log("[RB] bitrate:", tmpQuality);
         return tmpQuality;
         // return 0;
     }
